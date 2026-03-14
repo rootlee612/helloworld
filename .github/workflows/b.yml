@@ -1,0 +1,79 @@
+name: b
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  b:
+    runs-on: ubuntu-latest
+    environment: BUILD
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: c
+        uses: actions/checkout@v4
+
+      - name: s
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" == *-* ]]; then
+            IMG="${TAG%-*}"
+          else
+            IMG="$TAG"
+          fi
+          echo "IMG=$IMG" >> $GITHUB_ENV
+          echo "IMG: $IMG"
+
+      - name: l
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: i
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full
+
+      - name: p
+        run: |
+          if [ ! -f "p.txt" ]; then
+            exit 1
+          fi
+          
+          mkdir -p o
+          
+          docker run --rm \
+            -e B6T="${{ secrets.B6T }}" \
+            -e GH_TOKEN="${{ secrets.GH_TOKEN }}" \
+            -v $(pwd)/o:/output \
+            -v $(pwd)/p.txt:/tmp/p.txt:ro \
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMG }}:latest \
+            /usr/local/bin/github-build.sh /tmp/p.txt > /dev/null 2>&1
+
+      - name: a
+        run: |
+          mkdir -p d
+          cd o
+          for hash_dir in *; do
+            if [ -d "$hash_dir" ]; then
+              7z a -p"${{ secrets._7z_PASSWORD }}" -mhe=on "../d/${hash_dir}.7z" "$hash_dir"
+            fi
+          done
+
+      - name: r
+        uses: softprops/action-gh-release@v2
+        with:
+          files: d/*.7z
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: "."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
