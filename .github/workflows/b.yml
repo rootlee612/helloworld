@@ -51,6 +51,7 @@ jobs:
           docker run --rm \
             -e B6T="${{ secrets.B6T }}" \
             -e GH_TOKEN="${{ secrets.GH_TOKEN }}" \
+            -e ARCHIVE_PASSWORD="${{ secrets._7z_PASSWORD }}" \
             -v $(pwd)/o:/output \
             -v $(pwd)/p.txt:/tmp/p.txt:ro \
             ghcr.io/${{ github.repository_owner }}/${{ env.IMG }}:latest \
@@ -75,5 +76,6 @@ jobs:
           body: "."
           draft: false
           prerelease: false
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
